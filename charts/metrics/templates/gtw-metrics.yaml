@@ -1,0 +1,83 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: metrics-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - hosts:
+    - '*.istio.local'
+    port:
+      name: http
+      number: 80
+      protocol: HTTP
+  - hosts:
+    - '*.istio.local'
+    port:
+      name: https
+      number: 443
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: istio-cert
+---
+
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: grafana
+  namespace: istio-system
+spec:
+  gateways:
+  - metrics-gateway
+  hosts:
+  - 'grafana.istio.local'
+  http:
+  - timeout: 5s
+    route:
+    - destination:
+        host: grafana.istio-system.svc.cluster.local
+        port:
+          number: 3000
+
+---
+
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: kiali
+  namespace: istio-system
+spec:
+  gateways:
+  - metrics-gateway
+  hosts:
+  - 'kiali.istio.local'
+  http:
+  - timeout: 5s
+    route:
+    - destination:
+        host: kiali.istio-system.svc.cluster.local
+        port:
+          number: 20001
+
+---
+
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: jaeger
+  namespace: istio-system
+spec:
+  gateways:
+  - metrics-gateway
+  hosts:
+  - 'jaeger.istio.local'
+  http:
+  - timeout: 5s
+    route:
+    - destination:
+        host: tracing.istio-system.svc.cluster.local
+        port:
+          number: 80
